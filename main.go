@@ -50,7 +50,12 @@ func main() {
 			return errors.New("provider not specified")
 		}
 
-		protoParser, err := grpchelper.NewProtoParser(args.ProtoFilenames)
+		var protoParser grpchelper.ProtoParser
+		if args.ProtoReflection {
+			protoParser, err = grpchelper.NewProtoParserFromReflection(fmt.Sprintf("127.0.0.1:%d", args.ServicePort))
+		} else {
+			protoParser, err = grpchelper.NewProtoParser(args.ProtoFilenames)
+		}
 		if err != nil {
 			return
 		}

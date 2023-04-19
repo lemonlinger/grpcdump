@@ -31,7 +31,11 @@ var flags []cli.Flag = []cli.Flag{
 		Name:     "proto-file",
 		Aliases:  []string{"f"},
 		Usage:    "proto file to parse http2 frame, can use multiple times; e.g. -f rpc1.proto -f rpc2.proto",
-		Required: true,
+		Required: false,
+	},
+	&cli.BoolFlag{
+		Name:  "proto-reflect",
+		Usage: "get proto via grpc reflection, at least one of proto-file and proto-reflect is required",
 	},
 	&cli.StringFlag{
 		Name:     "guess-path",
@@ -75,9 +79,10 @@ type Args struct {
 	Source string
 
 	// parser
-	ServicePort    int
-	ProtoFilenames []string
-	GuessPaths     []string
+	ServicePort     int
+	ProtoFilenames  []string
+	GuessPaths      []string
+	ProtoReflection bool
 
 	// outputter
 	OutputFormat
@@ -102,10 +107,14 @@ func newArgs(ctx *cli.Context) (args *Args, err error) {
 		args.Source = pcapFilename
 	}
 
+	args.ProtoReflection = ctx.Bool("proto-reflect")
 	args.ProtoFilenames = ctx.StringSlice("proto-file")
 	args.GuessPaths = strings.Split(ctx.String("guess-path"), ",")
 	if args.GuessPaths[0] == "" {
 		args.GuessPaths = []string{}
+	}
+	if !args.ProtoReflection && len(args.ProtoFilenames) == 0 {
+		return nil, errors.New("at least one of proto-reflect and proto-file is required")
 	}
 
 	switch ctx.String("output-format") {
